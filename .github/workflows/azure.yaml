@@ -19,9 +19,9 @@ jobs:
       - name: Checkout access from Britive and login to Azure
         run: |
           # Use pybritive to output a ready-to-use az login command
-          LOGIN_CMD=$(pybritive checkout -t demo.britive-app.com "Azure/Azure/Azure AD - Directory Reader" -m azlogin -P github-britive)
+          LOGIN_CMD=$(pybritive checkout -t demo.britive-app.com "Azure/Azure/Azure AD - Directory Reader" -m azlogin -P github-britive | grep '^az login')
 
-          # Evaluate the login command directly
+          # Evaluate just the az login command
           eval "$LOGIN_CMD"
 
       - name: Confirm Azure Access
