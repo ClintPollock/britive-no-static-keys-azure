@@ -20,13 +20,16 @@ jobs:
         run: |
           echo "Checking out Azure login command from Britive..."
 
-          # Disable command echo to hide sensitive output
+          # Turn off command echoing
           set +x
-          LOGIN_CMD=$(pybritive checkout -t demo.britive-app.com "Azure/Azure/Azure AD - Directory Reader" -m azlogin -P github-britive | grep '^az login')
-          set -x
 
-          # Login to Azure with the command from Britive
-          eval "$LOGIN_CMD"
+          # Run pybritive and eval the login, suppressing az output
+          pybritive checkout -t demo.britive-app.com "Azure/Azure/Azure AD - Directory Reader" -m azlogin -P github-britive | grep '^az login' > login.sh
+          chmod +x login.sh
+          ./login.sh > /dev/null 2>&1
+
+          # Turn echoing back on
+          set -x
 
       - name: Confirm Azure access (safe output only)
         run: |
