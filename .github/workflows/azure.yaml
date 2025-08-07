@@ -17,34 +17,18 @@ jobs:
       FED_PROVIDER: github-britive
 
     steps:
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
       - name: Install pybritive
         run: |
           pip install pybritive --quiet
 
-      - name: Authenticate to Azure via Britive
+      - name: Checkout access from Britive and login to Azure
         run: |
-          # Set up alias to map to your full Britive profile path
-          pybritive configure update profile-aliases azure "$BRITIVE_PROFILE_NAME"
+          # Use pybritive to output a ready-to-use az login command
+          LOGIN_CMD=$(pybritive checkout -t demo.britive-app.com "Britive Azure Tenant/Britive Azure Tenant/Directory Reader" -m azlogin -P github-britive)
 
-          # Checkout secret from Britive (SP credentials for Azure)
-          CREDS=$(pybritive checkout azure -m secret -P "$FED_PROVIDER" --json)
+          # Evaluate the login command directly
+          eval "$LOGIN_CMD"
 
-          CLIENT_ID=$(echo "$CREDS" | jq -r '.credentials.username')
-          CLIENT_SECRET=$(echo "$CREDS" | jq -r '.credentials.password')
-          TENANT_ID=$(echo "$CREDS" | jq -r '.credentials.tenant')
-
-          # Authenticate to Azure using az CLI and Britive-issued credentials
-          az login \
-            --service-principal \
-            --username "$CLIENT_ID" \
-            --password "$CLIENT_SECRET" \
-            --tenant "$TENANT_ID"
-
-      - name: Test Azure Access
+      - name: Confirm Azure Access
         run: |
           az account show
