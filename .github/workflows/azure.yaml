@@ -1,9 +1,7 @@
-name: Britive-GitHub Federated Access for Azure Keyless via OpenID Connect
+name: Britive-GitHub Federated Access for Azure via OpenID Connect
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 8 * * *'  # Runs daily at 08:00 UTC
 
 permissions:
   id-token: write
@@ -15,9 +13,8 @@ jobs:
 
     env:
       BRITIVE_TENANT: demo
-      BRITIVE_PROFILE_NAME: Britive Azure Tenant/Britive Azure Tenant/Azure AD - Directory Reader
+      BRITIVE_PROFILE_NAME: Britive Azure Tenant/Britive Azure Tenant/Directory Reader
       FED_PROVIDER: github-britive
-      AZURE_REGION: eastus
 
     steps:
       - name: Set up Python
@@ -25,23 +22,29 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install pybritive and Azure CLI
+      - name: Install pybritive
         run: |
           pip install pybritive --quiet
-          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
-      - name: Configure Britive and Azure Credential Process
+      - name: Authenticate to Azure via Britive
         run: |
-          # Create Azure profile using pybritive
+          # Set up alias to map to your full Britive profile path
           pybritive configure update profile-aliases azure "$BRITIVE_PROFILE_NAME"
 
-          # Run pybritive to get a federated token and configure Azure CLI
-          eval "$(pybritive checkout azure -m azurecredentialprocess -P $FED_PROVIDER --shell)"
-          
-          # Confirm identity for debug
-          az account show
+          # Checkout secret from Britive (SP credentials for Azure)
+          CREDS=$(pybritive checkout azure -m secret -P "$FED_PROVIDER" --json)
 
-      - name: Test Azure Access - List VMs
+          CLIENT_ID=$(echo "$CREDS" | jq -r '.credentials.username')
+          CLIENT_SECRET=$(echo "$CREDS" | jq -r '.credentials.password')
+          TENANT_ID=$(echo "$CREDS" | jq -r '.credentials.tenant')
+
+          # Authenticate to Azure using az CLI and Britive-issued credentials
+          az login \
+            --service-principal \
+            --username "$CLIENT_ID" \
+            --password "$CLIENT_SECRET" \
+            --tenant "$TENANT_ID"
+
+      - name: Test Azure Access
         run: |
-          echo "Listing Azure VMs..."
-          az vm list --output table
+          az account show
