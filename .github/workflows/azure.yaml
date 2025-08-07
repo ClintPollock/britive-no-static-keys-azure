@@ -16,14 +16,19 @@ jobs:
         run: |
           pip install pybritive --quiet
 
-      - name: Checkout access from Britive and login to Azure
+      - name: Checkout Azure access from Britive and login
         run: |
-          # Use pybritive to output a ready-to-use az login command
-          LOGIN_CMD=$(pybritive checkout -t demo.britive-app.com "Azure/Azure/Azure AD - Directory Reader" -m azlogin -P github-britive | grep '^az login')
+          echo "Checking out Azure login command from Britive..."
 
-          # Evaluate just the az login command
+          # Disable command echo to hide sensitive output
+          set +x
+          LOGIN_CMD=$(pybritive checkout -t demo.britive-app.com "Azure/Azure/Azure AD - Directory Reader" -m azlogin -P github-britive | grep '^az login')
+          set -x
+
+          # Login to Azure with the command from Britive
           eval "$LOGIN_CMD"
 
-      - name: Confirm Azure Access
+      - name: Confirm Azure access (safe output only)
         run: |
-          az account show
+          echo "Confirming Azure login..."
+          az account show --query "{subscription:name, userType:user.type}" --output json
