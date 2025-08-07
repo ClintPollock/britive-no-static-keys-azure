@@ -11,11 +11,6 @@ jobs:
   federated-azure-access:
     runs-on: ubuntu-latest
 
-    env:
-      BRITIVE_TENANT: demo
-      BRITIVE_PROFILE_NAME: Britive Azure Tenant/Britive Azure Tenant/Directory Reader
-      FED_PROVIDER: github-britive
-
     steps:
       - name: Install pybritive
         run: |
@@ -24,7 +19,7 @@ jobs:
       - name: Checkout access from Britive and login to Azure
         run: |
           # Use pybritive to output a ready-to-use az login command
-          LOGIN_CMD=$(pybritive checkout -t demo.britive-app.com "Britive Azure Tenant/Britive Azure Tenant/Directory Reader" -m azlogin -P github-britive)
+          LOGIN_CMD=$(pybritive checkout -t demo.britive-app.com "Azure/Azure/Azure AD - Directory Reader" -m azlogin -P github-britive)
 
           # Evaluate the login command directly
           eval "$LOGIN_CMD"
